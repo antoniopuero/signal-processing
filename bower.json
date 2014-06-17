@@ -1,0 +1,26 @@
+{
+  "name": "signal-processing",
+  "version": "0.0.1",
+  "homepage": "https://github.com/antoniopuero/signal-processing",
+  "authors": [
+    "Anton Savchenko <antonio.puero@gmail.com>"
+  ],
+  "description": "sygnal processing",
+  "main": "/src/dsp/",
+  "keywords": [
+    "dsp",
+    "digital",
+    "sygnal"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "underscore": "~1.6.0"
+  }
+}

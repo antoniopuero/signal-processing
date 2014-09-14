@@ -3,9 +3,89 @@
 <head lang="en">
     <meta charset="UTF-8">
     <title>test</title>
+    <link rel="stylesheet" href="vendor/jsxgraph/distrib/jsxgraph.css">
 </head>
 <body>
 <script src="vendor/underscore/underscore.js"></script>
+<script src="vendor/dsp/dsp.js"></script>
+<script src="vendor/jquery/dist/jquery.min.js"></script>
+<script src="vendor/jsxgraph/distrib/jsxgraphcore.js"></script>
 <script src="src/dsp.js"></script>
+<script src="src/trigger.js"></script>
+<script src="src/syncronize.js"></script>
+<script>
+
+
+    var code = function (val1, val2) {
+        return val1 ^ val2;
+    };
+
+    var tc = triggersChain();
+    tc.initChain(10, [3, 10], code);
+
+
+    tc.set();
+
+    var goldChain = tc.getSequence(1023);
+
+    console.log(goldChain);
+
+    var countZeroes = 0;
+    var countOnes = 0;
+//
+//    _.each(goldChain, function (el) {
+//       if (el == 0) {
+//           countZeroes += 1;
+//       } else {
+//           countOnes += 1;
+//       }
+//    });
+//
+//    console.log(countOnes, countZeroes)
+
+    var sync = syncronize();
+
+    sync.init({
+        firstFrequency: 50,
+        firstSequence: [1, 0, 1, 1,1, 0, 1,1, 0, 1,1, 0, 1,1, 0, 1,1, 0, 1,1, 0, 1,1, 0, 1,1, 0, 1,1, 0, 1,1, 0, 1,1, 0, 1,1, 0, 1,1, 0, 1,1, 0, 1,1, 0, 1,1, 0, 1,1, 0, 1],
+        secondFrequency: 1023,
+        secondSequence: goldChain
+    });
+
+    var result = [];
+
+    _.each(goldChain, function () {
+        sync.nextStep();
+        result.push(code.apply(this, sync.getSyncResults()));
+    });
+    console.log(result);
+
+
+    var dft2 = new DFT(1024, 2046);
+    dft2.forward(result);
+
+
+
+</script>
+<div id="box" class="jxgbox" style="width:500px; height:500px;"></div>
+<div id="spectr" class="jxgbox" style="width:500px; height:500px;"></div>
+<script type="text/javascript">
+    var board = JXG.JSXGraph.initBoard('box', {boundingbox: [0, 2, goldChain.length, -1], axis:true});
+
+
+    _.each(goldChain, function (el, index) {
+        board.create('line',[[index, 0],[index , el]], {straightFirst:false, straightLast:false, strokeWidth:1});
+    });
+
+    var dftOfGoldChain = new DFT(1024, 2046);
+    dftOfGoldChain.forward(goldChain);
+
+
+    var spectr = JXG.JSXGraph.initBoard('spectr', {boundingbox: [0, Math.max.apply(Math, dftOfGoldChain.spectrum), dftOfGoldChain.spectrum.length, 0], axis:true});
+
+    _.each(dftOfGoldChain.spectrum, function (el, index) {
+        spectr.create('line',[[index, 0],[index , el]], {straightFirst:false, straightLast:false, strokeWidth:1});
+    });
+</script>
 </body>
 </html>

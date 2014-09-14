@@ -21,6 +21,9 @@
     "tests"
   ],
   "dependencies": {
-    "underscore": "~1.6.0"
+    "underscore": "~1.6.0",
+    "dsp": "https://github.com/corbanbrook/dsp.js.git",
+    "jsxgraph": "~0.99.1",
+    "jquery": "~2.1.1"
   }
 }

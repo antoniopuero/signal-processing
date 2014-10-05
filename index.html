@@ -7,10 +7,10 @@
 </head>
 <body>
 <script src="vendor/underscore/underscore.js"></script>
-<script src="vendor/dsp/dsp.js"></script>
 <script src="vendor/jquery/dist/jquery.min.js"></script>
 <script src="vendor/jsxgraph/distrib/jsxgraphcore.js"></script>
-<script src="src/dsp.js"></script>
+<script src="src/modified_dsp.js"></script>
+<script src="src/code_processing.js"></script>
 <script src="src/trigger.js"></script>
 <script src="src/syncronize.js"></script>
 <script>
@@ -67,8 +67,6 @@
 
 
 </script>
-<div id="box" class="jxgbox" style="width:500px; height:500px;"></div>
-<div id="spectr" class="jxgbox" style="width:500px; height:500px;"></div>
 <script type="text/javascript">
     var board = JXG.JSXGraph.initBoard('box', {boundingbox: [0, 2, goldChain.length, -1], axis:true});
 

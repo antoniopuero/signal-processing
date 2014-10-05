@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>transform</title>
+    <link rel="stylesheet" href="vendor/jsxgraph/distrib/jsxgraph.css">
+</head>
+<body>
+<style>
+    html, body {
+        width: 100%;
+        min-height: 100%;
+    }
+
+    #recreatedSignal, #signal, #spectrum {
+        height: 400px;
+        width: 300px;
+        display: inline-block;
+    }
+</style>
+
+<script src="vendor/underscore/underscore.js"></script>
+<script src="vendor/jquery/dist/jquery.min.js"></script>
+<script src="vendor/jsxgraph/distrib/jsxgraphcore.js"></script>
+<script src="vendor/processing/processing.min.js"></script>
+<script src="src/modified_dsp.js"></script>
+
+<canvas id="signal" class="jxgbox"></canvas>
+<canvas id="spectrum" class="jxgbox"></canvas>
+<canvas id="recreatedSignal" class="jxgbox"></canvas>
+
+<script>
+    function sketchSignal(processing) {
+        var width = processing.width;
+        var height = processing.height;
+
+        var centerX = width / 2, centerY = height / 2;
+        var theta = 0;
+        var amplitude = Math.round(height / 3);
+        var period = 50;
+        var xspacing = 1;
+        var dx = (2 * Math.PI / period) * xspacing;
+        var yranges = _.range(Math.floor(width / xspacing));
+        var yvalues;
+
+        function sign(x) { return x ? x < 0 ? -1 : 1 : 0; }
+
+        function  calculateWave () {
+            theta += 0.02;
+            var x = theta;
+            yvalues = _.map(yranges, function () {
+                x += dx;
+                return sign(Math.sin(x)) * amplitude;
+            });
+
+        }
+
+        function drawWave () {
+            _.each(yvalues, function (value, index, values) {
+                processing.ellipse(index*xspacing, centerY + value, 1, 1);
+                if (values[index + 1] && values[index + 1] !== value) {
+                    processing.line(index*xspacing, centerY + value, index*xspacing, centerY + values[index + 1]);
+                }
+            });
+        }
+
+        processing.draw = function () {
+
+            // erase background
+            processing.background(224);
+            calculateWave();
+            drawWave();
+        };
+    }
+
+    function sketchSpectrum(processing) {
+        var width = processing.width;
+        var height = processing.height;
+
+        var centerX = width / 2, centerY = height / 2;
+        var theta = 0;
+        var amplitude = Math.round(height / 3);
+        var period = 50;
+        var xspacing = 1;
+        var dx = (2 * Math.PI / period) * xspacing;
+        var yranges = _.range(Math.floor(width / xspacing));
+        var yvalues;
+
+        processing.scale(1, -1);
+        processing.translate(0, -height);
+
+        function sign(x) { return x ? x < 0 ? -1 : 1 : 0; }
+
+        function  calculateWave () {
+            theta += 0.02;
+            var x = theta;
+            var signal = _.map(yranges, function () {
+                x += dx;
+                return sign(Math.sin(x)) * amplitude;
+            });
+
+            var fft = new DFT(128, 2048);
+            fft.forward(signal);
+            yvalues = fft.spectrum;
+
+        }
+
+        function drawWave () {
+            _.each(yvalues, function (value, index) {
+                var xValue = index * xspacing;
+                processing.line(xValue, value, xValue, 0);
+            });
+        }
+
+        processing.draw = function () {
+
+            // erase background
+            processing.background(224);
+            processing.stroke(1);
+            calculateWave();
+            drawWave();
+        };
+    }
+
+    function sketchRecreatedSignal(processing) {
+        var width = processing.width;
+        var height = processing.height;
+
+        var centerX = width / 2, centerY = height / 2;
+        var theta = 0;
+        var amplitude = Math.round(height / 3);
+        var period = 50;
+        var xspacing = 1;
+        var dx = (2 * Math.PI / period) * xspacing;
+        var yranges = _.range(Math.floor(width / xspacing));
+        var yvalues;
+
+
+        function sign(x) { return x ? x < 0 ? -1 : 1 : 0; }
+
+        function  calculateWave () {
+            theta += 0.02;
+            var x = theta;
+            var signal = _.map(yranges, function () {
+                x += dx;
+                return sign(Math.sin(x)) * amplitude;
+            });
+
+            var dft = new DFT(128, 2048);
+            dft.forward(signal);
+            yvalues = dft.realSignal;
+        }
+
+        function drawWave () {
+            _.each(yvalues, function (value, index, values) {
+                processing.ellipse(index*xspacing, centerY + value, 1, 1);
+                if (values[index + 1] && values[index + 1] !== value) {
+                    processing.line(index*xspacing, centerY + value, index*xspacing, centerY + values[index + 1]);
+                }
+            });
+        }
+
+        processing.draw = function () {
+
+            // erase background
+            processing.background(224);
+            processing.stroke(1);
+            calculateWave();
+            drawWave();
+        };
+    }
+
+    var signal = document.getElementById("signal");
+    // attaching the sketchProc function to the canvas
+    var signalProcessingInstance = new Processing(signal, sketchSignal);
+
+    var spectrum = document.getElementById("spectrum");
+    // attaching the sketchProc function to the canvas
+    var spectrumProcessingInstance = new Processing(spectrum, sketchSpectrum);
+
+    var recreatedSignal = document.getElementById("recreatedSignal");
+    // attaching the sketchProc function to the canvas
+    var recreatedSignalProcessingInstance = new Processing(recreatedSignal, sketchRecreatedSignal);
+</script>
+
+
+</body>
+</html>

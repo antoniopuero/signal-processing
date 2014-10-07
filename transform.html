@@ -30,36 +30,68 @@
 <canvas id="recreatedSignal" class="jxgbox"></canvas>
 
 <script>
+
+
+    var signal = {
+        yrange: [],
+        dx: 0,
+        amplitude: 0,
+        closestDim: 0,
+        actualSignal: [],
+        signalSpectrum: [],
+        reconstructedSignal: [],
+        setYrange: function (width, xspacing) {
+          var closest = [32,64,128,256,512,1024,2048,4096];
+            var count = Math.floor(width / xspacing);
+          this.yrange = _.range(count);
+          this.closestDim = _.find(closest, function (el) {
+              return count < el;
+          });
+        },
+        setXstep: function (dx) {
+          this.dx = dx;
+        },
+        setAmplitude: function (a) {
+          this.amplitude = a;
+        },
+        calcualateSignal: function (startX) {
+            function sign(x) { return x ? x < 0 ? -1 : 1 : 0; }
+            var x = startX;
+            var self = this;
+            this.actualSignal = _.map(this.yrange, function () {
+                x += self.dx;
+
+                return sign(Math.sin(x)) * self.amplitude;
+            });
+        },
+        calculateSpectrum: function () {
+            var fft = new DFT(this.closestDim, 2048);
+            fft.forward(this.actualSignal);
+            this.signalSpectrum = fft.spectrum;
+            this.reconstructedSignal = fft.realSignal;
+        }
+    };
+
+    var startParams = {
+        theta: 0,
+        xspacing: 1,
+        period: 50
+    };
+
     function sketchSignal(processing) {
         var width = processing.width;
         var height = processing.height;
 
         var centerX = width / 2, centerY = height / 2;
-        var theta = 0;
-        var amplitude = Math.round(height / 3);
-        var period = 50;
-        var xspacing = 1;
-        var dx = (2 * Math.PI / period) * xspacing;
-        var yranges = _.range(Math.floor(width / xspacing));
-        var yvalues;
-
-        function sign(x) { return x ? x < 0 ? -1 : 1 : 0; }
-
-        function  calculateWave () {
-            theta += 0.02;
-            var x = theta;
-            yvalues = _.map(yranges, function () {
-                x += dx;
-                return sign(Math.sin(x)) * amplitude;
-            });
-
-        }
+        signal.setXstep((2 * Math.PI / startParams.period) * startParams.xspacing);
+        signal.setAmplitude(Math.round(height / 3));
+        signal.setYrange(width, startParams.xspacing);
 
         function drawWave () {
-            _.each(yvalues, function (value, index, values) {
-                processing.ellipse(index*xspacing, centerY + value, 1, 1);
+            _.each(signal.actualSignal, function (value, index, values) {
+                processing.ellipse(index*startParams.xspacing, centerY + value, 1, 1);
                 if (values[index + 1] && values[index + 1] !== value) {
-                    processing.line(index*xspacing, centerY + value, index*xspacing, centerY + values[index + 1]);
+                    processing.line(index*startParams.xspacing, centerY + value, index*startParams.xspacing, centerY + values[index + 1]);
                 }
             });
         }
@@ -68,7 +100,8 @@
 
             // erase background
             processing.background(224);
-            calculateWave();
+            startParams.theta += 0.02;
+            signal.calcualateSignal(startParams.theta);
             drawWave();
         };
     }
@@ -77,37 +110,12 @@
         var width = processing.width;
         var height = processing.height;
 
-        var centerX = width / 2, centerY = height / 2;
-        var theta = 0;
-        var amplitude = Math.round(height / 3);
-        var period = 50;
-        var xspacing = 1;
-        var dx = (2 * Math.PI / period) * xspacing;
-        var yranges = _.range(Math.floor(width / xspacing));
-        var yvalues;
-
         processing.scale(1, -1);
         processing.translate(0, -height);
 
-        function sign(x) { return x ? x < 0 ? -1 : 1 : 0; }
-
-        function  calculateWave () {
-            theta += 0.02;
-            var x = theta;
-            var signal = _.map(yranges, function () {
-                x += dx;
-                return sign(Math.sin(x)) * amplitude;
-            });
-
-            var fft = new DFT(128, 2048);
-            fft.forward(signal);
-            yvalues = fft.spectrum;
-
-        }
-
         function drawWave () {
-            _.each(yvalues, function (value, index) {
-                var xValue = index * xspacing;
+            _.each(signal.signalSpectrum, function (value, index) {
+                var xValue = index * startParams.xspacing;
                 processing.line(xValue, value, xValue, 0);
             });
         }
@@ -117,7 +125,7 @@
             // erase background
             processing.background(224);
             processing.stroke(1);
-            calculateWave();
+            signal.calculateSpectrum();
             drawWave();
         };
     }
@@ -127,35 +135,14 @@
         var height = processing.height;
 
         var centerX = width / 2, centerY = height / 2;
-        var theta = 0;
-        var amplitude = Math.round(height / 3);
-        var period = 50;
-        var xspacing = 1;
-        var dx = (2 * Math.PI / period) * xspacing;
-        var yranges = _.range(Math.floor(width / xspacing));
-        var yvalues;
 
-
-        function sign(x) { return x ? x < 0 ? -1 : 1 : 0; }
-
-        function  calculateWave () {
-            theta += 0.02;
-            var x = theta;
-            var signal = _.map(yranges, function () {
-                x += dx;
-                return sign(Math.sin(x)) * amplitude;
-            });
-
-            var dft = new DFT(128, 2048);
-            dft.forward(signal);
-            yvalues = dft.realSignal;
-        }
 
         function drawWave () {
-            _.each(yvalues, function (value, index, values) {
-                processing.ellipse(index*xspacing, centerY + value, 1, 1);
+            _.each(signal.reconstructedSignal, function (value, index, values) {
+                var xValue = index * startParams.xspacing;
+                processing.ellipse(xValue, centerY + value, 1, 1);
                 if (values[index + 1] && values[index + 1] !== value) {
-                    processing.line(index*xspacing, centerY + value, index*xspacing, centerY + values[index + 1]);
+                    processing.line(xValue, centerY + value, xValue, centerY + values[index + 1]);
                 }
             });
         }
@@ -165,22 +152,21 @@
             // erase background
             processing.background(224);
             processing.stroke(1);
-            calculateWave();
             drawWave();
         };
     }
 
-    var signal = document.getElementById("signal");
+    var signalEl = document.getElementById("signal");
     // attaching the sketchProc function to the canvas
-    var signalProcessingInstance = new Processing(signal, sketchSignal);
+    var signalProcessingInstance = new Processing(signalEl, sketchSignal);
 
-    var spectrum = document.getElementById("spectrum");
+    var spectrumEl = document.getElementById("spectrum");
     // attaching the sketchProc function to the canvas
-    var spectrumProcessingInstance = new Processing(spectrum, sketchSpectrum);
+    var spectrumProcessingInstance = new Processing(spectrumEl, sketchSpectrum);
 
-    var recreatedSignal = document.getElementById("recreatedSignal");
+    var recreatedSignalEl = document.getElementById("recreatedSignal");
     // attaching the sketchProc function to the canvas
-    var recreatedSignalProcessingInstance = new Processing(recreatedSignal, sketchRecreatedSignal);
+    var recreatedSignalProcessingInstance = new Processing(recreatedSignalEl, sketchRecreatedSignal);
 </script>
 
 

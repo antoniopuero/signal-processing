@@ -12,9 +12,9 @@
         min-height: 100%;
     }
 
-    #recreatedSignal, #signal, #spectrum {
-        height: 400px;
-        width: 300px;
+    #recreatedSignal, #signal, #spectrum, #noizedSignal, #spectrumOfNoizedSignal {
+        height: 200px;
+        width: 32%;
         display: inline-block;
     }
 </style>
@@ -24,150 +24,17 @@
 <script src="vendor/jsxgraph/distrib/jsxgraphcore.js"></script>
 <script src="vendor/processing/processing.min.js"></script>
 <script src="src/modified_dsp.js"></script>
+<script src="src/trigger.js"></script>
+<script src="src/syncronize.js"></script>
 
 <canvas id="signal" class="jxgbox"></canvas>
 <canvas id="spectrum" class="jxgbox"></canvas>
 <canvas id="recreatedSignal" class="jxgbox"></canvas>
+<canvas id="noizedSignal" class="jxgbox"></canvas>
+<canvas id="spectrumOfNoizedSignal" class="jxgbox"></canvas>
+<canvas id="recreatedNoizedSignal" class="jxgbox"></canvas>
 
-<script>
-
-
-    var signal = {
-        yrange: [],
-        dx: 0,
-        amplitude: 0,
-        closestDim: 0,
-        actualSignal: [],
-        signalSpectrum: [],
-        reconstructedSignal: [],
-        setYrange: function (width, xspacing) {
-          var closest = [32,64,128,256,512,1024,2048,4096];
-            var count = Math.floor(width / xspacing);
-          this.yrange = _.range(count);
-          this.closestDim = _.find(closest, function (el) {
-              return count < el;
-          });
-        },
-        setXstep: function (dx) {
-          this.dx = dx;
-        },
-        setAmplitude: function (a) {
-          this.amplitude = a;
-        },
-        calcualateSignal: function (startX) {
-            function sign(x) { return x ? x < 0 ? -1 : 1 : 0; }
-            var x = startX;
-            var self = this;
-            this.actualSignal = _.map(this.yrange, function () {
-                x += self.dx;
-
-                return sign(Math.sin(x)) * self.amplitude;
-            });
-        },
-        calculateSpectrum: function () {
-            var fft = new DFT(this.closestDim, 2048);
-            fft.forward(this.actualSignal);
-            this.signalSpectrum = fft.spectrum;
-            this.reconstructedSignal = fft.realSignal;
-        }
-    };
-
-    var startParams = {
-        theta: 0,
-        xspacing: 1,
-        period: 50
-    };
-
-    function sketchSignal(processing) {
-        var width = processing.width;
-        var height = processing.height;
-
-        var centerX = width / 2, centerY = height / 2;
-        signal.setXstep((2 * Math.PI / startParams.period) * startParams.xspacing);
-        signal.setAmplitude(Math.round(height / 3));
-        signal.setYrange(width, startParams.xspacing);
-
-        function drawWave () {
-            _.each(signal.actualSignal, function (value, index, values) {
-                processing.ellipse(index*startParams.xspacing, centerY + value, 1, 1);
-                if (values[index + 1] && values[index + 1] !== value) {
-                    processing.line(index*startParams.xspacing, centerY + value, index*startParams.xspacing, centerY + values[index + 1]);
-                }
-            });
-        }
-
-        processing.draw = function () {
-
-            // erase background
-            processing.background(224);
-            startParams.theta += 0.02;
-            signal.calcualateSignal(startParams.theta);
-            drawWave();
-        };
-    }
-
-    function sketchSpectrum(processing) {
-        var width = processing.width;
-        var height = processing.height;
-
-        processing.scale(1, -1);
-        processing.translate(0, -height);
-
-        function drawWave () {
-            _.each(signal.signalSpectrum, function (value, index) {
-                var xValue = index * startParams.xspacing;
-                processing.line(xValue, value, xValue, 0);
-            });
-        }
-
-        processing.draw = function () {
-
-            // erase background
-            processing.background(224);
-            processing.stroke(1);
-            signal.calculateSpectrum();
-            drawWave();
-        };
-    }
-
-    function sketchRecreatedSignal(processing) {
-        var width = processing.width;
-        var height = processing.height;
-
-        var centerX = width / 2, centerY = height / 2;
-
-
-        function drawWave () {
-            _.each(signal.reconstructedSignal, function (value, index, values) {
-                var xValue = index * startParams.xspacing;
-                processing.ellipse(xValue, centerY + value, 1, 1);
-                if (values[index + 1] && values[index + 1] !== value) {
-                    processing.line(xValue, centerY + value, xValue, centerY + values[index + 1]);
-                }
-            });
-        }
-
-        processing.draw = function () {
-
-            // erase background
-            processing.background(224);
-            processing.stroke(1);
-            drawWave();
-        };
-    }
-
-    var signalEl = document.getElementById("signal");
-    // attaching the sketchProc function to the canvas
-    var signalProcessingInstance = new Processing(signalEl, sketchSignal);
-
-    var spectrumEl = document.getElementById("spectrum");
-    // attaching the sketchProc function to the canvas
-    var spectrumProcessingInstance = new Processing(spectrumEl, sketchSpectrum);
-
-    var recreatedSignalEl = document.getElementById("recreatedSignal");
-    // attaching the sketchProc function to the canvas
-    var recreatedSignalProcessingInstance = new Processing(recreatedSignalEl, sketchRecreatedSignal);
-</script>
+<script src="src/main_processing.js"></script>
 
 
 </body>

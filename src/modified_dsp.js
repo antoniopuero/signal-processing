@@ -423,7 +423,14 @@ FFT.prototype.forward = function(buffer) {
   var k = Math.floor(Math.log(bufferSize) / Math.LN2);
 
   if (Math.pow(2, k) !== bufferSize) { throw "Invalid buffer size, must be a power of 2."; }
-  if (bufferSize !== buffer.length)  { throw "Supplied buffer is not the same size as defined FFT. FFT Size: " + bufferSize + " Buffer Size: " + buffer.length; }
+
+  if (bufferSize !== buffer.length)  {
+    for (var d = 0, size = bufferSize - buffer.length, arr=[]; d < size; d += 1) {
+      arr.push(0);
+    }
+
+    buffer = buffer.concat(arr);
+  }
 
   var halfSize = 1,
       phaseShiftStepReal,

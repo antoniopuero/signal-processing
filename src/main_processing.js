@@ -53,7 +53,7 @@ var initializeNoizedSignal = function (yvalues) {
   });
 
   var result = [];
-  _.each(_.range(yvalues.length * 100), function () {
+  _.each(_.range(yvalues.length * 4), function () {
     sync.nextStep();
     var syncRes = sync.getSyncResults();
 
@@ -119,7 +119,8 @@ var signal = {
 var startParams = {
   theta: 0,
   xspacing: 1,
-  period: 50
+  period: 50,
+  frequency: 50
 };
 
 function sketchSignal(processing) {
@@ -204,68 +205,6 @@ function sketchRecreatedSignal(processing) {
   };
 }
 
-function sketchNoizedSignal(processing) {
-  var width = processing.width;
-  var height = processing.height;
-  var amplitude = Math.round(height / 3);
-  var counter = 0;
-  signal.addNoizeToSignal();
-  var counterStep = signal.getRate();
-
-  processing.scale(1, -1);
-  processing.translate(0, -height);
-
-  var centerX = width / 2, centerY = height / 2;
-
-
-  function drawWave() {
-    _.each(signal.actualSignalwithNoize, function (value, index, values) {
-      value *= amplitude;
-      var size = width / values.length;
-      var xValue = index * size;
-      processing.ellipse(xValue, centerY + value, size, size);
-      if (values[index + 1] && values[index + 1]*amplitude !== value) {
-        processing.line(xValue, centerY + value, xValue, centerY + values[index + 1] * amplitude);
-      }
-    });
-  }
-
-  processing.draw = function () {
-
-    // erase background
-    processing.background(224);
-    processing.stroke(0.1);
-    counter += counterStep;
-    counter = signal.getNoizedSignal(counter);
-    drawWave();
-  };
-}
-
-
-function sketchNoizedSignalSpectrum(processing) {
-  var width = processing.width;
-  var height = processing.height;
-  var amplitude = Math.floor(height /3);
-  signal.calculateSpectrumOfNoized(amplitude);
-
-  processing.scale(1, -1);
-  processing.translate(0, -height);
-
-  function drawWave() {
-    _.each(signal.signalWithNoizeSpectrum, function (value, index, values) {
-      var xValue = index * width * 5/ values.length;
-      processing.line(xValue, value, xValue, 0);
-    });
-  }
-
-  processing.draw = function () {
-
-    // erase background
-    processing.background(224);
-    drawWave();
-  };
-}
-
 var signalEl = document.getElementById("signal");
 // attaching the sketchProc function to the canvas
 new Processing(signalEl, sketchSignal);
@@ -278,10 +217,90 @@ var recreatedSignalEl = document.getElementById("recreatedSignal");
 // attaching the sketchProc function to the canvas
 new Processing(recreatedSignalEl, sketchRecreatedSignal);
 
-var noizedSignalEl = document.getElementById("noizedSignal");
-// attaching the sketchProc function to the canvas
-new Processing(noizedSignalEl, sketchNoizedSignal);
-//
-var spectrumOfNoizedSignalEl = document.getElementById("spectrumOfNoizedSignal");
-// attaching the sketchProc function to the canvas
-new Processing(spectrumOfNoizedSignalEl, sketchNoizedSignalSpectrum);
+var signalPlot = _.map(signal.signal, function (val, index) {
+  return [index, val];
+});
+
+$.plot($('#signalPlot'), [signalPlot],{});
+var spectrumCustom = new DFT(128, 256);
+spectrumCustom.forward(signal.signal);
+
+var spectrumPlot = _.map(spectrumCustom.spectrum, function (val, index) {
+  return [index, val];
+});
+
+$.plot($('#spectrumPlot'), [spectrumPlot],{series: {bars: {show: true}}});
+
+var noizedSignal = initializeNoizedSignal(signal.signal).noizedSignal;
+
+var signalWithNoizePlot = _.map(noizedSignal, function (val, index) {
+  return [index / 4, val];
+});
+
+$.plot($('#signalWithNoizePlot'), [signalWithNoizePlot], {});
+
+var noizedSignalSpectrum = new DFT(512, 1024);
+noizedSignalSpectrum.forward(noizedSignal);
+
+
+var signalWithNoizeSpectrumPlot = _.map(noizedSignalSpectrum.spectrum, function (val, index) {
+  return [index, val];
+});
+
+var dataset = [{
+    "label": "Signal",
+    data: spectrumPlot,
+    color: 0
+  }, {
+    label: "Signal with noize",
+    data: signalWithNoizeSpectrumPlot,
+    color: 1
+  }];
+
+$.plot($('#signalWithNoizeSpectrumPlot'), dataset, {series: {bars: {show: true}}});
+
+var correlation = function (base, otherSignal) {
+
+  otherSignal = otherSignal ? otherSignal : base;
+  var step = Math.floor(otherSignal.length / 2);
+  var maxStep = otherSignal.length;
+
+
+  var correlationRes = _.map(base, function () {
+
+    var swapedSignal = otherSignal.slice(step).concat(otherSignal.slice(0, step));
+    var count = 0;
+    _.each(swapedSignal, function (value, index) {
+      if (value === base[index]) {
+        count += 1;
+      }
+    });
+
+
+    step += 1;
+    step = step % maxStep;
+
+    return count / maxStep;
+  });
+
+  return correlationRes;
+};
+
+var signalAutoCorrelationPlot = _.map(correlation(signal.signal), function (val, index) {
+  return [index, val];
+});
+
+$.plot($('#signalAutoCorrelation'), [signalAutoCorrelationPlot], {});
+
+var signalWithNoizeAutoCorrelation = _.map(correlation(noizedSignal), function (val, index) {
+  return [index, val];
+});
+
+$.plot($('#signalWithNoizeAutoCorrelation'), [signalWithNoizeAutoCorrelation], {});
+
+
+var signalWithNoizeCorrelation = _.map(correlation(noizedSignal, goldChain), function (val, index) {
+  return [index, val];
+});
+
+$.plot($('#signalWithNoizeCorrelation'), [signalWithNoizeCorrelation], {});

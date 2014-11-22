@@ -25,6 +25,7 @@
     "jsxgraph": "~0.99.1",
     "jquery": "~2.1.1",
     "processing": "~1.4.8",
-    "flot": "~0.8.3"
+    "flot": "~0.8.3",
+    "jquery-modal": "~0.5.2"
   }
 }

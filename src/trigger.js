@@ -34,11 +34,17 @@ var triggerEntity = function (options) {
   }
 };
 
+var feedbackFunction = function (values) {
+  return _.reduce(values, function (result, value) {
+    return result ^ value;
+  });
+};
+
 var triggersChain = function () {
   var triggers = [];
   var feedback;
 
-  var initChain = function (triggersNumber, triggerIndexes, feedbackFunction) {
+  var initChain = function (triggersNumber, triggerIndexes) {
     for (var i =0; i < triggersNumber; i+= 1) {
       addTriggers(triggerEntity());
     }
@@ -62,7 +68,7 @@ var triggersChain = function () {
         return getTriggerValue(index - 1);
       });
 
-      return feedbackFunction.apply(this, values);
+      return feedbackFunction.call(this, values);
     }
   };
 

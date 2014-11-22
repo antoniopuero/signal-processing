@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="vendor/jquery-modal/jquery.modal.css">
+    <title>Gold sequence</title>
+</head>
+<body>
+
+<div id="input-form" class="modal">
+    <p>Fill in trigger chain length:</p>
+    <input name="chainLength" type="text">
+    <p>Fill in trigger numbers which will be included into feedback circuit (coma separated):</p>
+    <input name="triggerNumbers" type="text">
+    <p>Fill in sequence length:</p>
+    <input name="sequenceLength" type="text">
+    <button id="calculate-gold-sequence">Calculate</button>
+</div>
+
+<script src="vendor/underscore/underscore.js"></script>
+<script src="vendor/jquery/dist/jquery.min.js"></script>
+<script src="vendor/jquery-modal/jquery.modal.js"></script>
+<script src="src/trigger.js"></script>
+<script>
+    $('#input-form').modal();
+    $('#calculate-gold-sequence').click(function (e) {
+        e.preventDefault();
+        var chainLength = $('[name=chainLength]').val();
+        var triggerNumbers = $('[name=triggerNumbers]').val();
+        var sequenceLength = $('[name=sequenceLength]').val();
+        var tc = triggersChain();
+        tc.initChain(chainLength, triggerNumbers.split(','));
+
+        tc.set();
+
+        var sequence = tc.getSequence(sequenceLength);
+        console.log(sequence);
+    });
+</script>
+</body>
+</html>

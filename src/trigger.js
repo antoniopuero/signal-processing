@@ -115,6 +115,15 @@ var triggersChain = function () {
     });
   };
 
+  var isMSequence = function (sequence) {
+    var zerosCount = 1, onesCount = 0;
+    _.each(sequence, function (value) {
+      value ? onesCount ++ : zerosCount ++;
+    });
+    console.log(zerosCount, onesCount)
+    return zerosCount === onesCount;
+  };
+
   return {
     initChain: initChain,
     addTriggers: addTriggers,
@@ -122,6 +131,7 @@ var triggersChain = function () {
     getTriggerValue: getTriggerValue,
     set: set,
     reset: reset,
-    getSequence: getSequence
+    getSequence: getSequence,
+    isMSequence: isMSequence
   }
 };

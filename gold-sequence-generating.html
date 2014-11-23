@@ -2,24 +2,29 @@
 <html>
 <head lang="en">
     <meta charset="UTF-8">
+    <!--<link rel="stylesheet" href="vendor/bootstrap/dist/css/bootstrap.min.css">-->
     <link rel="stylesheet" href="vendor/jquery-modal/jquery.modal.css">
     <title>Gold sequence</title>
 </head>
 <body>
-
-<div id="input-form" class="modal">
-    <p>Fill in trigger chain length:</p>
-    <input name="chainLength" type="text">
-    <p>Fill in trigger numbers which will be included into feedback circuit (coma separated):</p>
-    <input name="triggerNumbers" type="text">
-    <p>Fill in sequence length:</p>
-    <input name="sequenceLength" type="text">
-    <button id="calculate-gold-sequence">Calculate</button>
+<div class="container">
+    <div id="input-form" class="modal">
+        <p>Fill in trigger chain length:</p>
+        <input name="chainLength" type="text">
+        <p>Fill in trigger numbers which will be included into feedback circuit (coma separated):</p>
+        <input name="triggerNumbers" type="text">
+        <p>Fill in sequence length:</p>
+        <input name="sequenceLength" type="text">
+        <button id="calculate-gold-sequence">Calculate</button>
+    </div>
 </div>
+<textarea id="sequence" style="width: 600px; height: 300px"></textarea>
+<div id="sequencePlot" style="height: 300px;"></div>
 
 <script src="vendor/underscore/underscore.js"></script>
 <script src="vendor/jquery/dist/jquery.min.js"></script>
 <script src="vendor/jquery-modal/jquery.modal.js"></script>
+<script src="vendor/flot/jquery.flot.js"></script>
 <script src="src/trigger.js"></script>
 <script>
     $('#input-form').modal();
@@ -34,7 +39,18 @@
         tc.set();
 
         var sequence = tc.getSequence(sequenceLength);
-        console.log(sequence);
+
+        var sequencePlot = _.map(sequence, function (val, index) {
+            return [index, val];
+        });
+
+        alert('sequence is M-like: ' + tc.isMSequence(sequence));
+
+        $('#sequence').text(sequence.join(''));
+
+        $.plot($('#sequencePlot'), [sequencePlot], {});
+
+        $.modal.close();
     });
 </script>
 </body>

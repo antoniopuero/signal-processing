@@ -94,10 +94,10 @@ var triggersChain = function () {
     }
   };
 
-  var getSequence = function (length) {
+  var getSequence = function () {
     var resultSequence = [];
 
-    for (var i = 0; i < length; i += 1) {
+    for (var i = 0, max = Math.pow(2, triggers.length) - 1; i < max; i += 1) {
       resultSequence.unshift(moveValueThroughChain());
     }
     return resultSequence;

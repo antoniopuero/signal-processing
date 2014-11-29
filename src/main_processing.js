@@ -1,72 +1,3 @@
-var mathUtils = {
-  xor: function (val1, val2) {
-    return Math.abs(val1) ^ Math.abs(val2);
-  },
-  add: function (val1, val2) {
-    return val1 + val2;
-  },
-  sign: function (x) {
-  return x ? x < 0 ? -1 : 1 : 0;
-  }
-};
-
-var goldChain = (function () {
-  var tc = triggersChain();
-  tc.initChain(10, [3, 10], mathUtils.xor);
-
-  tc.set();
-
-  return tc.getSequence(1023);
-})();
-
-var meandrSignal = function (period, xspace, n) {
-  var dx = (2 * Math.PI / period) * xspace;
-  var x = 0;
-  var signal = _.map(_.range(period / xspace), function () {
-    x += dx;
-    return mathUtils.sign(Math.sin(x));
-  });
-
-  if (signal.length === 0) {
-    throw new Error('memory leak will be caused!');
-  }
-
-  var result = [];
-  while (result.length < n) {
-    result = result.concat(signal);
-  }
-
-  result.length = n;
-
-  return result;
-};
-
-var initializeNoizedSignal = function (yvalues) {
-  var sync = syncronize();
-
-
-  sync.init({
-    firstFrequency: 50,
-    firstSequence: yvalues,
-    secondFrequency: 1023,
-    secondSequence: goldChain
-  });
-
-  var result = [];
-  _.each(_.range(yvalues.length * 4), function () {
-    sync.nextStep();
-    var syncRes = sync.getSyncResults();
-
-    result.push(mathUtils.xor.apply(this, syncRes));
-  });
-
-
-  return {
-    noizedSignal: result,
-    xspace: sync.getFrequencyRate()
-  };
-};
-
 var signal = {
   signal: [],
   actualSignal: [],
@@ -89,29 +20,6 @@ var signal = {
     fft.forward(this.actualSignal);
     this.signalSpectrum = fft.spectrum;
     this.reconstructedSignal = fft.realSignal;
-  },
-
-  addNoizeToSignal: function () {
-    this.signalwithNoize = initializeNoizedSignal(this.signal).noizedSignal;
-  },
-
-  getNoizedSignal: function (shift) {
-      shift = shift % this.signal.length;
-      this.actualSignalwithNoize = _.filter(this.signalwithNoize.slice(shift).concat(this.signal.slice(0, shift)), function (val) {
-        return val != -1;
-      });
-      return shift;
-  },
-
-  getRate: function () {
-    return Math.floor(this.signalwithNoize.length / this.signal.length);
-  },
-
-  calculateSpectrumOfNoized: function (amp) {
-    var fft = new DFT(2048, 8192);
-    fft.forward(_.map(this.signalwithNoize, function (val) {return val * amp}));
-    this.signalWithNoizeSpectrum = fft.spectrum;
-    this.reconstructedSignalWithNoize = fft.realSignal;
   }
 
 };
@@ -217,37 +125,41 @@ var recreatedSignalEl = document.getElementById("recreatedSignal");
 // attaching the sketchProc function to the canvas
 new Processing(recreatedSignalEl, sketchRecreatedSignal);
 
-var signalPlot = _.map(signal.signal, function (val, index) {
-  return [index, val];
-});
+var mainInit = function (mSequence) {
 
-$.plot($('#signalPlot'), [signalPlot],{});
-var spectrumCustom = new DFT(128, 256);
-spectrumCustom.forward(signal.signal);
+  var signalPlot = _.map(signal.signal, function (val, index) {
+    return [index, val];
+  });
 
-var spectrumPlot = _.map(spectrumCustom.spectrum, function (val, index) {
-  return [index, val];
-});
+  $.plot($('#signalPlot'), [signalPlot],{});
+  var spectrumCustom = new DFT(128, 256);
+  spectrumCustom.forward(signal.signal);
 
-$.plot($('#spectrumPlot'), [spectrumPlot],{series: {bars: {show: true}}});
+  var spectrumPlot = _.map(spectrumCustom.spectrum, function (val, index) {
+    return [index, val];
+  });
 
-var noizedSignal = initializeNoizedSignal(signal.signal).noizedSignal;
+  $.plot($('#spectrumPlot'), [spectrumPlot],{series: {bars: {show: true}}});
 
-var signalWithNoizePlot = _.map(noizedSignal, function (val, index) {
-  return [index / 4, val];
-});
+  var noizedSignal = mixSignalWithMSequence(signal.signal, mSequence).noizedSignal;
 
-$.plot($('#signalWithNoizePlot'), [signalWithNoizePlot], {});
+  noizedSignal = addRandomNoize(noizedSignal);
 
-var noizedSignalSpectrum = new DFT(512, 1024);
-noizedSignalSpectrum.forward(noizedSignal);
+  var signalWithNoizePlot = _.map(noizedSignal, function (val, index) {
+    return [index / 4, val];
+  });
+
+  $.plot($('#signalWithNoizePlot'), [signalWithNoizePlot], {});
+
+  var noizedSignalSpectrum = new DFT(512, 1024);
+  noizedSignalSpectrum.forward(noizedSignal);
 
 
-var signalWithNoizeSpectrumPlot = _.map(noizedSignalSpectrum.spectrum, function (val, index) {
-  return [index, val];
-});
+  var signalWithNoizeSpectrumPlot = _.map(noizedSignalSpectrum.spectrum, function (val, index) {
+    return [index, val];
+  });
 
-var dataset = [{
+  var dataset = [{
     "label": "Signal",
     data: spectrumPlot,
     color: 0
@@ -257,50 +169,51 @@ var dataset = [{
     color: 1
   }];
 
-$.plot($('#signalWithNoizeSpectrumPlot'), dataset, {series: {bars: {show: true}}});
+  $.plot($('#signalWithNoizeSpectrumPlot'), dataset, {series: {bars: {show: true}}});
 
-var correlation = function (base, otherSignal) {
+  var correlation = function (base, otherSignal) {
 
-  otherSignal = otherSignal ? otherSignal : base;
-  var step = Math.floor(otherSignal.length / 2);
-  var maxStep = otherSignal.length;
+    otherSignal = otherSignal ? otherSignal : base;
+    var step = Math.floor(otherSignal.length / 2);
+    var maxStep = otherSignal.length;
 
 
-  var correlationRes = _.map(base, function () {
+    var correlationRes = _.map(base, function () {
 
-    var swapedSignal = otherSignal.slice(step).concat(otherSignal.slice(0, step));
-    var count = 0;
-    _.each(swapedSignal, function (value, index) {
-      if (value === base[index]) {
-        count += 1;
-      }
+      var swapedSignal = otherSignal.slice(step).concat(otherSignal.slice(0, step));
+      var count = 0;
+      _.each(swapedSignal, function (value, index) {
+        if (value === base[index]) {
+          count += 1;
+        }
+      });
+
+
+      step += 1;
+      step = step % maxStep;
+
+      return count / maxStep;
     });
 
+    return correlationRes;
+  };
 
-    step += 1;
-    step = step % maxStep;
-
-    return count / maxStep;
+  var signalAutoCorrelationPlot = _.map(correlation(signal.signal), function (val, index) {
+    return [index, val];
   });
 
-  return correlationRes;
+  $.plot($('#signalAutoCorrelation'), [signalAutoCorrelationPlot], {});
+
+  var signalWithNoizeAutoCorrelation = _.map(correlation(noizedSignal), function (val, index) {
+    return [index, val];
+  });
+
+  $.plot($('#signalWithNoizeAutoCorrelation'), [signalWithNoizeAutoCorrelation], {});
+
+
+  var signalWithNoizeCorrelation = _.map(correlation(noizedSignal, mSequence), function (val, index) {
+    return [index, val];
+  });
+
+  $.plot($('#signalWithNoizeCorrelation'), [signalWithNoizeCorrelation], {});
 };
-
-var signalAutoCorrelationPlot = _.map(correlation(signal.signal), function (val, index) {
-  return [index, val];
-});
-
-$.plot($('#signalAutoCorrelation'), [signalAutoCorrelationPlot], {});
-
-var signalWithNoizeAutoCorrelation = _.map(correlation(noizedSignal), function (val, index) {
-  return [index, val];
-});
-
-$.plot($('#signalWithNoizeAutoCorrelation'), [signalWithNoizeAutoCorrelation], {});
-
-
-var signalWithNoizeCorrelation = _.map(correlation(noizedSignal, goldChain), function (val, index) {
-  return [index, val];
-});
-
-$.plot($('#signalWithNoizeCorrelation'), [signalWithNoizeCorrelation], {});

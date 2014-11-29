@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>transform</title>
     <link rel="stylesheet" href="vendor/jsxgraph/distrib/jsxgraph.css">
+    <link rel="stylesheet" href="vendor/jquery-modal/jquery.modal.css">
 </head>
 <body>
 <style>
@@ -26,10 +27,12 @@
 <script src="vendor/underscore/underscore.js"></script>
 <script src="vendor/jquery/dist/jquery.min.js"></script>
 <script src="vendor/flot/jquery.flot.js"></script>
+<script src="vendor/jquery-modal/jquery.modal.js"></script>
 <script src="vendor/processing/processing.min.js"></script>
 <script src="src/modified_dsp.js"></script>
 <script src="src/trigger.js"></script>
 <script src="src/syncronize.js"></script>
+<script src="src/signal_processing.js"></script>
 <h1>Signal in-time processing</h1>
 <canvas id="signal" class="jxgbox"></canvas>
 <canvas id="spectrum" class="jxgbox"></canvas>
@@ -50,7 +53,50 @@
 <h1>Signal with noize correlation</h1>
 <div class="plot" id="signalWithNoizeCorrelation"></div>
 
+<div class="container">
+    <div id="input-form" class="modal">
+        <p>Fill in trigger chain length:</p>
+        <input name="chainLength" type="text">
+        <p>Fill in trigger numbers which will be included into feedback circuit (coma separated):</p>
+        <input name="triggerNumbers" type="text">
+        <button id="calculate-gold-sequence">Calculate</button>
+    </div>
+</div>
+
+<textarea id="sequence" style="width: 600px; height: 300px"></textarea>
+<div id="sequencePlot" style="height: 300px;"></div>
+
+
 <script src="src/main_processing.js"></script>
+<script>
+    $('#input-form').modal();
+    $('#calculate-gold-sequence').click(function (e) {
+        e.preventDefault();
+        var chainLength = $('[name=chainLength]').val();
+        var triggerNumbers = $('[name=triggerNumbers]').val();
+        var tc = triggersChain();
+        tc.initChain(chainLength, triggerNumbers.split(','));
+
+        tc.set();
+
+        var sequence = tc.getSequence();
+
+        var sequencePlot = _.map(sequence, function (val, index) {
+            return [index, val];
+        });
+
+        alert('sequence is M-like: ' + tc.isMSequence(sequence));
+
+        $('#sequence').text(sequence.join(''));
+
+        $.plot($('#sequencePlot'), [sequencePlot], {});
+
+        $.modal.close();
+
+        mainInit(sequence);
+    });
+</script>
+
 
 
 </body>

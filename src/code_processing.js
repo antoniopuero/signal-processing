@@ -18,18 +18,6 @@ signalProcessing = (function () {
     return decodeSignal.join('');
   };
 
-  var generateSignal = function () {
-
-  };
-
-  var modulateSignal = function () {
-
-  };
-
-  var demodulateSignal = function () {
-
-  };
-
   return {
     code: code,
     decode: decode,

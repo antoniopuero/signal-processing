@@ -16,7 +16,7 @@ var signal = {
     return shift;
   },
   calculateSpectrum: function () {
-    var fft = new DFT(128, 2048);
+    var fft = new DFT(mathUtils.findTheCloserBinary(this.actualSignal.length), 2* mathUtils.findTheCloserBinary(this.actualSignal.length));
     fft.forward(this.actualSignal);
     this.signalSpectrum = fft.spectrum;
     this.reconstructedSignal = fft.realSignal;
@@ -125,14 +125,14 @@ var recreatedSignalEl = document.getElementById("recreatedSignal");
 // attaching the sketchProc function to the canvas
 new Processing(recreatedSignalEl, sketchRecreatedSignal);
 
-var mainInit = function (mSequence) {
+var mainInit = function (mSequence, sequence_2) {
 
   var signalPlot = _.map(signal.signal, function (val, index) {
     return [index, val];
   });
 
   $.plot($('#signalPlot'), [signalPlot],{});
-  var spectrumCustom = new DFT(128, 256);
+  var spectrumCustom = new DFT(mathUtils.findTheCloserBinary(signal.signal.length), 2 * mathUtils.findTheCloserBinary(signal.signal.length));
   spectrumCustom.forward(signal.signal);
 
   var spectrumPlot = _.map(spectrumCustom.spectrum, function (val, index) {
@@ -141,17 +141,17 @@ var mainInit = function (mSequence) {
 
   $.plot($('#spectrumPlot'), [spectrumPlot],{series: {bars: {show: true}}});
 
-  var noizedSignal = mixSignalWithMSequence(signal.signal, mSequence).noizedSignal;
+  var noizedSignal = mixSignalWithMSequence(signal.signal, startParams.period, mSequence).noizedSignal;
 
-  noizedSignal = addRandomNoize(noizedSignal);
+  //noizedSignal = addRandomNoize(noizedSignal);
 
   var signalWithNoizePlot = _.map(noizedSignal, function (val, index) {
-    return [index / 4, val];
+    return [index, val];
   });
 
   $.plot($('#signalWithNoizePlot'), [signalWithNoizePlot], {});
 
-  var noizedSignalSpectrum = new DFT(512, 1024);
+  var noizedSignalSpectrum = new DFT(mathUtils.findTheCloserBinary(noizedSignal.length), 2 * mathUtils.findTheCloserBinary(noizedSignal.length));
   noizedSignalSpectrum.forward(noizedSignal);
 
 
@@ -198,22 +198,41 @@ var mainInit = function (mSequence) {
     return correlationRes;
   };
 
-  var signalAutoCorrelationPlot = _.map(correlation(signal.signal), function (val, index) {
+  var autoCorrelation = function (signal) {
+    var closestBinary = mathUtils.findTheCloserBinary(signal.length);
+    var fft = new FFT(closestBinary, 2* closestBinary);
+    fft.forward(signal);
+
+    var real = _.map(fft.real, function(value, index) {
+      return value * value + fft.imag[index] * fft.imag[index];
+    });
+
+    var imag = _.map(real, function () {
+      return 0;
+    });
+
+    return fft.inverse(real, imag);
+  };
+
+  var signalAutoCorrelationPlot = _.map(autoCorrelation(signal.signal), function (val, index) {
     return [index, val];
   });
 
   $.plot($('#signalAutoCorrelation'), [signalAutoCorrelationPlot], {});
 
-  var signalWithNoizeAutoCorrelation = _.map(correlation(noizedSignal), function (val, index) {
+  var signalWithNoizeAutoCorrelation = _.map(autoCorrelation(noizedSignal), function (val, index) {
     return [index, val];
   });
 
   $.plot($('#signalWithNoizeAutoCorrelation'), [signalWithNoizeAutoCorrelation], {});
 
+  var noizedSignal_2 = mixSignalWithMSequence(signal.signal, startParams.period, sequence_2).noizedSignal;
 
-  var signalWithNoizeCorrelation = _.map(correlation(noizedSignal, mSequence), function (val, index) {
-    return [index, val];
-  });
+  noizedSignal_2 = addRandomNoize(noizedSignal_2);
 
-  $.plot($('#signalWithNoizeCorrelation'), [signalWithNoizeCorrelation], {});
+  //var signalWithNoizeCorrelation = _.map(correlation(noizedSignal, noizedSignal_2), function (val, index) {
+  //  return [index, val];
+  //});
+  //
+  //$.plot($('#signalWithNoizeCorrelation'), [signalWithNoizeCorrelation], {});
 };

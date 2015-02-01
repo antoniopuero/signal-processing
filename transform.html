@@ -19,7 +19,6 @@
         display: inline-block;
     }
     .plot {
-        width: 50%;
         height: 300px;
     }
 </style>
@@ -59,6 +58,10 @@
         <input name="chainLength" type="text">
         <p>Fill in trigger numbers which will be included into feedback circuit (coma separated):</p>
         <input name="triggerNumbers" type="text">
+        <p>Fill in second trigger chain length:</p>
+        <input name="secondChainLength" type="text">
+        <p>Fill in second trigger numbers which will be included into feedback circuit (coma separated):</p>
+        <input name="secondTriggerNumbers" type="text">
         <button id="calculate-gold-sequence">Calculate</button>
     </div>
 </div>
@@ -74,26 +77,32 @@
         e.preventDefault();
         var chainLength = $('[name=chainLength]').val();
         var triggerNumbers = $('[name=triggerNumbers]').val();
-        var tc = triggersChain();
-        tc.initChain(chainLength, triggerNumbers.split(','));
+        var secondChainLength = $('[name=secondChainLength]').val();
+        var secondTriggerNumbers = $('[name=secondTriggerNumbers]').val();
+        var tc_1 = triggersChain();
+        var tc_2 = triggersChain();
+        tc_1.initChain(chainLength, triggerNumbers.split(','));
+        tc_2.initChain(chainLength, triggerNumbers.split(','));
 
-        tc.set();
+        tc_1.set();
+        tc_2.set();
 
-        var sequence = tc.getSequence();
+        var sequence_1 = tc_1.getSequence();
+        var sequence_2 = tc_2.getSequence();
 
-        var sequencePlot = _.map(sequence, function (val, index) {
+        var sequencePlot = _.map(sequence_1, function (val, index) {
             return [index, val];
         });
 
-        alert('sequence is M-like: ' + tc.isMSequence(sequence));
+        alert('sequences are M-like: ' + tc_1.isMSequence(sequence_1));
 
-        $('#sequence').text(sequence.join(''));
+        $('#sequence').text(sequence_1.join(''));
 
         $.plot($('#sequencePlot'), [sequencePlot], {});
 
         $.modal.close();
 
-        mainInit(sequence);
+        mainInit(sequence_1, sequence_2);
     });
 </script>
 

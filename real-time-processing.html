@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>transform</title>
+    <link rel="stylesheet" href="vendor/jsxgraph/distrib/jsxgraph.css">
+</head>
+<body>
+<style>
+    html, body {
+        width: 100%;
+        min-height: 100%;
+    }
+
+    #recreatedSignal, #signal, #spectrum {
+        height: 200px;
+        width: 32%;
+        display: inline-block;
+    }
+</style>
+
+<script src="vendor/underscore/underscore.js"></script>
+<script src="vendor/jquery/dist/jquery.min.js"></script>
+<script src="vendor/processing/processing.min.js"></script>
+<script src="src/modified_dsp.js"></script>
+<script src="src/signal_processing.js"></script>
+<script src="src/signal_initialization.js"></script>
+<h1>Signal in-time processing</h1>
+<canvas id="signal" class="jxgbox"></canvas>
+<canvas id="spectrum" class="jxgbox"></canvas>
+<canvas id="recreatedSignal" class="jxgbox"></canvas>
+
+
+<script src="src/realtime-processing.js"></script>
+</body>
+</html>

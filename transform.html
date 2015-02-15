@@ -12,12 +12,6 @@
         width: 100%;
         min-height: 100%;
     }
-
-    #recreatedSignal, #signal, #spectrum {
-        height: 200px;
-        width: 32%;
-        display: inline-block;
-    }
     .plot {
         height: 300px;
     }
@@ -27,30 +21,27 @@
 <script src="vendor/jquery/dist/jquery.min.js"></script>
 <script src="vendor/flot/jquery.flot.js"></script>
 <script src="vendor/jquery-modal/jquery.modal.js"></script>
-<script src="vendor/processing/processing.min.js"></script>
 <script src="src/modified_dsp.js"></script>
 <script src="src/trigger.js"></script>
 <script src="src/syncronize.js"></script>
 <script src="src/signal_processing.js"></script>
-<h1>Signal in-time processing</h1>
-<canvas id="signal" class="jxgbox"></canvas>
-<canvas id="spectrum" class="jxgbox"></canvas>
-<canvas id="recreatedSignal" class="jxgbox"></canvas>
+<script src="src/signal_initialization.js"></script>
+
 <h1>Signal plot</h1>
 <div class="plot" id="signalPlot"></div>
 <h1>Signal spectrum plot</h1>
 <div class="plot" id="spectrumPlot"></div>
 <h1>Signal with noize plot</h1>
-<div class="plot" id="signalWithNoizePlot"></div>
+<div class="plot" id="signalWithNoisePlot"></div>
 <h1>Signal with noize spectrum plot</h1>
-<div class="plot" id="signalWithNoizeSpectrumPlot"></div>
+<div class="plot" id="signalWithNoiseSpectrumPlot"></div>
 <h1>Signal Autocorrelation</h1>
 <div class="plot" id="signalAutoCorrelation"></div>
-<h1>Signal with noize Autocorrelation</h1>
-<div class="plot" id="signalWithNoizeAutoCorrelation"></div>
+<h1>modulated signal Autocorrelation</h1>
+<div class="plot" id="signalWithNoiseAutoCorrelation"></div>
 
 <h1>Signal with noize correlation</h1>
-<div class="plot" id="signalWithNoizeCorrelation"></div>
+<div class="plot" id="signalWithNoiseCorrelation"></div>
 
 <div class="container">
     <div id="input-form" class="modal">
@@ -58,16 +49,16 @@
         <input name="chainLength" type="text">
         <p>Fill in trigger numbers which will be included into feedback circuit (coma separated):</p>
         <input name="triggerNumbers" type="text">
-        <p>Fill in second trigger chain length:</p>
-        <input name="secondChainLength" type="text">
-        <p>Fill in second trigger numbers which will be included into feedback circuit (coma separated):</p>
-        <input name="secondTriggerNumbers" type="text">
+        <!--<p>Fill in second trigger chain length:</p>-->
+        <!--<input name="secondChainLength" type="text">-->
+        <!--<p>Fill in second trigger numbers which will be included into feedback circuit (coma separated):</p>-->
+        <!--<input name="secondTriggerNumbers" type="text">-->
         <button id="calculate-gold-sequence">Calculate</button>
     </div>
 </div>
 
-<textarea id="sequence" style="width: 600px; height: 300px"></textarea>
-<div id="sequencePlot" style="height: 300px;"></div>
+<textarea id="sequence" class="plot"></textarea>
+<div id="sequencePlot" class="plot"></div>
 
 
 <script src="src/main_processing.js"></script>
@@ -77,18 +68,18 @@
         e.preventDefault();
         var chainLength = $('[name=chainLength]').val();
         var triggerNumbers = $('[name=triggerNumbers]').val();
-        var secondChainLength = $('[name=secondChainLength]').val();
-        var secondTriggerNumbers = $('[name=secondTriggerNumbers]').val();
+//        var secondChainLength = $('[name=secondChainLength]').val();
+//        var secondTriggerNumbers = $('[name=secondTriggerNumbers]').val();
         var tc_1 = triggersChain();
-        var tc_2 = triggersChain();
+//        var tc_2 = triggersChain();
         tc_1.initChain(chainLength, triggerNumbers.split(','));
-        tc_2.initChain(chainLength, triggerNumbers.split(','));
+//        tc_2.initChain(chainLength, triggerNumbers.split(','));
 
         tc_1.set();
-        tc_2.set();
+//        tc_2.set();
 
         var sequence_1 = tc_1.getSequence();
-        var sequence_2 = tc_2.getSequence();
+//        var sequence_2 = tc_2.getSequence();
 
         var sequencePlot = _.map(sequence_1, function (val, index) {
             return [index, val];
@@ -102,7 +93,7 @@
 
         $.modal.close();
 
-        mainInit(sequence_1, sequence_2);
+        mainInit(sequence_1);
     });
 </script>
 

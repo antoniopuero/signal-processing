@@ -19,64 +19,85 @@ var mathUtils = {
       }
       n += 1;
     }
-    return Math.pow(2, n+1);
+    return Math.pow(2, n + 1);
   }
 };
 
-var meandrSignal = function (period, xspace, n) {
-  var dx = (2 * Math.PI / period) * xspace;
-  var x = 0;
-  var signal = _.map(_.range(period / xspace), function () {
-    x += dx;
-    return mathUtils.sign(Math.sin(x));
-  });
-
-  if (signal.length === 0) {
-    throw new Error('memory leak will be caused!');
-  }
-
-  var result = [];
-  while (result.length < n) {
-    result = result.concat(signal);
-  }
-
-  result.length = n;
-
-  return result;
-};
-
-var mixSignalWithMSequence = function (yvalues, signalPeriod, mSequence) {
-  var sync = syncronize();
-
-
-  sync.init({
-    firstFrequency: 1,
-    firstSequence: yvalues,
-    secondFrequency: mSequence.length,
-    secondSequence: mSequence
-  });
-
-  var result = [];
-  _.each(_.range(mSequence.length), function () {
-
-    _.each(_.range(Math.round(yvalues.length * 2 / signalPeriod)), function () {
-      sync.nextStep();
-      var syncRes = sync.getSyncResults();
-
-      result.push(mathUtils.xor.call(this, syncRes));
+var signalUtils = {
+  meandrSignal: function (period, xspace, n) {
+    var dx = (2 * Math.PI / period) * xspace;
+    var x = 0;
+    var signal = _.map(_.range(period / xspace), function () {
+      x += dx;
+      return mathUtils.sign(Math.sin(x));
     });
-  });
+
+    if (signal.length === 0) {
+      throw new Error('memory leak will be caused!');
+    }
+
+    var result = [];
+    if (n) {
+      while (result.length < n) {
+        result = result.concat(signal);
+      }
+      result.length = n;
+
+    } else {
+      result = signal;
+    }
 
 
-  return {
-    noizedSignal: result,
-    xspace: sync.getFrequencyRate()
-  };
-};
+    return result;
+  },
+  mixSignalWithMSequence: function (yvalues, signalPeriod, mSequence) {
+    var sync = syncronize();
 
-var addRandomNoize = function (signal, noizeAmplitude) {
-  noizeAmplitude = noizeAmplitude ? noizeAmplitude : 1;
-  return _.map(signal, function (value) {
-    return mathUtils.add(value, noizeAmplitude * Math.random().toPrecision(1));
-  });
+
+    sync.init({
+      firstFrequency: 1,
+      firstSequence: yvalues,
+      secondFrequency: mSequence.length,
+      secondSequence: mSequence
+    });
+
+    var result = [];
+    _.each(_.range(mSequence.length), function () {
+
+      _.each(_.range(Math.round(yvalues.length * 2 / signalPeriod)), function () {
+        sync.nextStep();
+        var syncRes = sync.getSyncResults();
+
+        result.push(mathUtils.xor.call(this, syncRes));
+      });
+    });
+
+
+    return {
+      noizedSignal: result,
+      xspace: sync.getFrequencyRate()
+    };
+  },
+  addRandomNoize: function (signal, noizeAmplitude) {
+    noizeAmplitude = noizeAmplitude ? noizeAmplitude : 1;
+    return _.map(signal, function (value) {
+      return mathUtils.add(value, noizeAmplitude * Math.random().toPrecision(1));
+    });
+  },
+  autoCorrelation: function (signal) {
+    var closestBinary = mathUtils.findTheCloserBinary(signal.length);
+    var fft = new FFT(closestBinary, 2 * closestBinary);
+    fft.forward(signal);
+
+    var real = _.map(fft.real, function (value, index) {
+      return value * value + fft.imag[index] * fft.imag[index];
+    });
+
+    var imag = _.map(real, function () {
+      return 0;
+    });
+
+    return fft.inverse(real, imag);
+  }
+
 };

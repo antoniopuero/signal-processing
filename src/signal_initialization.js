@@ -1,4 +1,4 @@
-var signal = {
+var signalInitialization = {
   signal: [],
   actualSignal: [],
   signalSpectrum: [],
@@ -27,8 +27,8 @@ var signal = {
 var startParams = {
   theta: 0,
   xspacing: 1,
-  period: 32,
-  frequency: 64
+  period: 128,
+  frequency: 128
 };
 
-signal.setSignal(signalUtils.meandrSignal(startParams.period, startParams.xspacing));
+//signalInitialization.setSignal(signalUtils.meandrSignal(startParams.period, startParams.xspacing));

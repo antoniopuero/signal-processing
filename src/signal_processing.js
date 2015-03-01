@@ -50,6 +50,14 @@ var signalUtils = {
 
     return result;
   },
+  setCustomSignal: function (signal, period) {
+    return _.reduce(signal, function (accumulator, value) {
+      return accumulator.concat(_.map(_.range(period), function () {
+        return value;
+      }))
+    }, []);
+  },
+
   mixSignalWithMSequence: function (yvalues, signalPeriod, mSequence) {
     var sync = syncronize();
 

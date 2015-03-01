@@ -45,6 +45,10 @@
 
 <div class="container">
     <div id="input-form" class="modal">
+        <p>Fill in the signal ("1, 0 ,1, 0" for example)</p>
+        <input name="signal" type="text">
+        <p>Fill in the signal period</p>
+        <input name="period" type="text">
         <p>Fill in trigger chain length:</p>
         <input name="chainLength" type="text">
         <p>Fill in trigger numbers which will be included into feedback circuit (coma separated):</p>
@@ -68,6 +72,10 @@
         e.preventDefault();
         var chainLength = $('[name=chainLength]').val();
         var triggerNumbers = $('[name=triggerNumbers]').val();
+        var signal = _.map($('[name=signal]').val().split(','), function (value) {
+            return parseInt(value, 10);
+        });
+        var period = parseInt($('[name=period]').val(), 10);
 //        var secondChainLength = $('[name=secondChainLength]').val();
 //        var secondTriggerNumbers = $('[name=secondTriggerNumbers]').val();
         var tc_1 = triggersChain();
@@ -93,7 +101,7 @@
 
         $.modal.close();
 
-        mainInit(sequence_1);
+        mainInit(signal, period, sequence_1);
     });
 </script>
 

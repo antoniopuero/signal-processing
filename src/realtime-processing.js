@@ -3,12 +3,12 @@ function sketchSignal(processing) {
   var height = processing.height;
 
   var centerX = width / 2, centerY = height / 2;
-  signal.setSignal(signalUtils.meandrSignal(startParams.period, startParams.xspacing, Math.floor(width / startParams.xspacing)));
+  signalInitialization.setSignal(signalUtils.meandrSignal(startParams.period, startParams.xspacing, Math.floor(width / startParams.xspacing)));
   var amplitude = Math.round(height / 3);
   var counter = 0;
 
   function drawWave() {
-    _.each(signal.actualSignal, function (value, index, values) {
+    _.each(signalInitialization.actualSignal, function (value, index, values) {
       value = value * amplitude;
       processing.ellipse(index * startParams.xspacing, centerY + value, startParams.xspacing, startParams.xspacing);
       if (values[index + 1] && values[index + 1]*amplitude !== value) {
@@ -22,7 +22,7 @@ function sketchSignal(processing) {
     // erase background
     processing.background(224);
     counter += 1;
-    counter = signal.calculateSignal(counter);
+    counter = signalInitialization.calculateSignal(counter);
     drawWave();
   };
 }
@@ -36,7 +36,7 @@ function sketchSpectrum(processing) {
   processing.translate(0, -height);
 
   function drawWave() {
-    _.each(signal.signalSpectrum, function (value, index) {
+    _.each(signalInitialization.signalSpectrum, function (value, index) {
       var xValue = index * startParams.xspacing;
       processing.line(xValue, value * amplitude, xValue, 0);
     });
@@ -47,7 +47,7 @@ function sketchSpectrum(processing) {
     // erase background
     processing.background(224);
     processing.stroke(1);
-    signal.calculateSpectrum();
+    signalInitialization.calculateSpectrum();
     drawWave();
   };
 }
@@ -61,7 +61,7 @@ function sketchRecreatedSignal(processing) {
 
 
   function drawWave() {
-    _.each(signal.reconstructedSignal, function (value, index, values) {
+    _.each(signalInitialization.reconstructedSignal, function (value, index, values) {
       value = value * amplitude;
       var xValue = index * startParams.xspacing;
       processing.ellipse(xValue, centerY + value, 1, 1);

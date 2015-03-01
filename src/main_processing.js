@@ -1,14 +1,16 @@
 
 
-var mainInit = function (mSequence, sequence_2) {
+var mainInit = function (signal, period, mSequence, sequence_2) {
 
-  var signalPlot = _.map(signal.signal, function (val, index) {
+  signalInitialization.setSignal(signalUtils.setCustomSignal(signal, period));
+
+  var signalPlot = _.map(signalInitialization.signal, function (val, index) {
     return [index, val];
   });
 
   $.plot($('#signalPlot'), [signalPlot],{});
-  var spectrumCustom = new DFT(mathUtils.findTheCloserBinary(signal.signal.length), 2 * mathUtils.findTheCloserBinary(signal.signal.length));
-  spectrumCustom.forward(signal.signal);
+  var spectrumCustom = new DFT(mathUtils.findTheCloserBinary(signalInitialization.signal.length), 2 * mathUtils.findTheCloserBinary(signalInitialization.signal.length));
+  spectrumCustom.forward(signalInitialization.signal);
 
   var spectrumPlot = _.map(spectrumCustom.spectrum, function (val, index) {
     return [index, val];
@@ -16,9 +18,9 @@ var mainInit = function (mSequence, sequence_2) {
 
   $.plot($('#spectrumPlot'), [spectrumPlot],{series: {bars: {show: true}}});
 
-  var noizedSignal = signalUtils.mixSignalWithMSequence(signal.signal, startParams.period, mSequence).noizedSignal;
+  var noizedSignal = signalUtils.mixSignalWithMSequence(signalInitialization.signal, startParams.period, mSequence).noizedSignal;
 
-  //noizedSignal = addRandomNoize(noizedSignal);
+  noizedSignal = signalUtils.addRandomNoize(noizedSignal);
 
   var signalWithNoisePlot = _.map(noizedSignal, function (val, index) {
     return [index, val];
@@ -47,7 +49,7 @@ var mainInit = function (mSequence, sequence_2) {
   $.plot($('#signalWithNoiseSpectrumPlot'), dataset, {series: {bars: {show: true}}});
 
 
-  var signalAutoCorrelationPlot = _.map(signalUtils.autoCorrelation(signal.signal), function (val, index) {
+  var signalAutoCorrelationPlot = _.map(signalUtils.autoCorrelation(signalInitialization.signal), function (val, index) {
     return [index, val];
   });
 
